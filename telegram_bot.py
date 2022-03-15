@@ -14,7 +14,8 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-DEVELOPER_ID = '1395019328'
+PRIVATE_ID = '1395019328'
+DEVELOPER_ID = '-716492562'
 DEVELOPER_TIMEZONE = pytz.timezone('Europe/Moscow')
 
 # Define a few command handlers. These usually take the two arguments update and
@@ -28,9 +29,9 @@ def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('''
         Xin chào!
 /help - danh sách lệnh
-/set <seconds> - lên lịch đăng bài channel
-/unset - hủy lịch
-/list - xem danh sách lịch
+/set <seconds> <channel> - lên lịch đăng bài channel public hoặc ctv
+/unset <channel> - hủy lịch đăng bài channel public hoặc ctv
+/list - xem danh sách lịch đăng bài
 /current_rate - xem tỷ giá chi tiết
 /set_profit <vnd2rub_profit> <rub2vnd_profit> - thay đổi tỷ lệ lợi nhuận
     ''')
@@ -42,10 +43,11 @@ def get_info(context: CallbackContext) -> None:
     """
     job = context.job
     to_dev = job.context.get('to_dev', '')
-    to_channel = job.context.get('to_channel', '')
+    to_public = job.context.get('to_public', '')
+    to_ctv = job.context.get('to_ctv', '')
     
     # context.bot.send_message(job.context, text='Bắt đầu lấy dữ liệu!')
-    subprocess.run(['scrapy','crawl','autoBinanceRate','-a',f'to_dev={to_dev}','-a',f'to_channel={to_channel}'])
+    subprocess.run(['scrapy','crawl','autoBinanceRate','-a',f'to_dev={to_dev}','-a',f'to_public={to_public}','-a',f'to_ctv={to_ctv}'])
     # context.bot.send_message(job.context, text='Đã lấy dữ liệu xong!')
 
 
@@ -65,35 +67,50 @@ def set_timer(update: Update, context: CallbackContext) -> None:
     try:
         # args[0] should contain the time for the timer in seconds
         interval = int(context.args[0])
+        channel = context.args[1]
         if interval < 2:
             update.message.reply_text('Xin lỗi mỗi lần lấy dữ liệu phải cách nhau ít nhất 2s!')
             return
 
-        job_name = "Update_"+str(chat_id)
+        if chat_id != DEVELOPER_ID:
+            update.message.reply_text('Xin lỗi chỉ admins mới được phép đăng bài!')
+            return
+
+        if channel not in ['public', 'ctv']:
+            raise ValueError
+        
+        job_name = channel+ '_' +str(chat_id)
         job_context = {
             'to_dev': 'n',
-            'to_channel': 'y'
+            'to_public': 'y' if channel == 'public' else 'n',
+            'to_ctv': 'y' if channel == 'ctv' else 'n'
         }
+
         job_removed = remove_job_if_exists(job_name, context)
         context.job_queue.run_repeating(get_info, interval=interval, first=2, context=job_context, name=job_name)
 
-        text = 'Lên lịch thành công!'
+        text = f'Lên lịch đăng bài channel {channel} thành công!'
         if job_removed:
             text += ' Lịch cũ đã bị hủy.'
-        text += f'\nĐăng bài channel mỗi {interval}s'
+        text += f'\nĐăng bài vào channel {channel} mỗi {interval}s'
         text += '\nBắt đầu thực thi sau 2s ...'
         update.message.reply_text(text)
 
     except (IndexError, ValueError):
-        update.message.reply_text('Usage: /set <seconds>')
+        update.message.reply_text('Usage: /set <seconds> <channel> (channel = {public, ctv})')
 
 def unset(update: Update, context: CallbackContext) -> None:
     """Remove the job if the user changed their mind."""
     chat_id = update.message.chat_id
-    job_name = "Update_"+str(chat_id)
-    job_removed = remove_job_if_exists(job_name, context)
-    text = 'Đã hủy lịch thành công!' if job_removed else 'Hiện không có lịch nào.'
-    update.message.reply_text(text)
+    try:
+        channel = context.args[0]
+        job_name = channel+"_"+str(chat_id)
+        job_removed = remove_job_if_exists(job_name, context)
+        text = f'Đã hủy lịch đăng bài channel {channel} thành công!' if job_removed else f'Hiện không có lịch đăng bài channel {channel} nào.'
+        update.message.reply_text(text)
+
+    except (IndexError, ValueError):
+        update.message.reply_text('Usage: /unset <channel> (channel = {public, ctv})')
 
 def list_job(update: Update, context: CallbackContext) -> None:
     """List time run of all current jobs"""
@@ -112,7 +129,8 @@ def get_rate(update: Update, context: CallbackContext )-> None:
         job_removed = remove_job_if_exists(job_name, context)
         job_context = {
             'to_dev': 'y',
-            'to_channel': 'n'
+            'to_public': 'n',
+            'to_ctv': 'n'
         }
         context.job_queue.run_once(get_info, when=2, context=job_context, name=job_name)
 
@@ -163,18 +181,31 @@ def set_profit(update: Update, context: CallbackContext )-> None:
 def auto_start_crawl(updater:Updater, dispatcher:Dispatcher):
     msg = '''
 Server đã khởi động lại
-Tự động lên lịch đăng bài channel sau mỗi 300s
+Tự động lên lịch đăng bài channel public sau mỗi 3600s
+Tự động lên lịch đăng bài channel ctv sau mỗi 300s
 Bắt đầu thực thi sau 2s ...
     '''
-    updater.bot.send_message(chat_id=DEVELOPER_ID, text=msg)
+    updater.bot.send_message(chat_id=PRIVATE_ID, text=msg)
 
-    interval = 300
-    job_name = "Update_"+str(DEVELOPER_ID)
+
+    interval = 3600
+    job_name = "public_"+str(DEVELOPER_ID)
     job_context = {
         'to_dev': 'n',
-        'to_channel': 'y'
+        'to_public': 'y',
+        'to_ctv': 'n'
     }
     dispatcher.job_queue.run_repeating(get_info, interval=interval, first=2, context=job_context, name=job_name)
+
+    interval = 300
+    job_name = "ctv_"+str(DEVELOPER_ID)
+    job_context = {
+        'to_dev': 'n',
+        'to_public': 'n',
+        'to_ctv': 'y'
+    }
+    dispatcher.job_queue.run_repeating(get_info, interval=interval, first=2, context=job_context, name=job_name)
+
 
 def main() -> None:
     """Run bot."""
@@ -187,8 +218,8 @@ def main() -> None:
     # on different commands - answer in Telegram
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("help", start))
-    dispatcher.add_handler(CommandHandler("set", set_timer))
-    dispatcher.add_handler(CommandHandler("unset", unset))
+    dispatcher.add_handler(CommandHandler("publish", set_timer))
+    dispatcher.add_handler(CommandHandler("stop", unset))
     dispatcher.add_handler(CommandHandler("list", list_job))
     dispatcher.add_handler(CommandHandler("current_rate", get_rate))
     dispatcher.add_handler(CommandHandler("set_profit", set_profit))

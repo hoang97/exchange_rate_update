@@ -12,7 +12,8 @@ import pytz
 from datetime import datetime
 
 DEVELOPER_ID = '-716492562'
-CHANNEL_ID = '@chuyentienspb'
+PUBLIC_ID = '@chuyentienspb'
+CTV_ID = ''
 TIMEZONE = pytz.timezone('Europe/Moscow')
 
 class AutoexchangeratePipeline:
@@ -109,8 +110,10 @@ class AutoexchangeratePipeline:
 
         if spider.to_dev == 'y':
             self.send_message_to_dev(spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub)
-        if spider.to_channel == 'y':
-            self.send_message_to_channel(spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub)
+        if spider.to_public == 'y':
+            self.send_message_to_public_channel(spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub)
+        if spider.to_ctv == 'y':
+            self.send_message_to_public_channel(spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub)
 
         logging.info('Scraped successfully!!!')
         # Disconnect from database
@@ -137,7 +140,33 @@ class AutoexchangeratePipeline:
 
         spider.bot.send_message(chat_id=DEVELOPER_ID, text=msg)
 
-    def send_message_to_channel(self, spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub):
+    def send_message_to_public_channel(self, spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub):
+        keys = [
+            ('VTBank24', 'BUY', 'USD', 'RUB'),
+            ('VTBank24', 'SELL', 'USD', 'RUB'),
+            ('VietcomBank', 'BUY', 'USD', 'VND'),
+            ('VietcomBank', 'SELL', 'USD', 'VND'),
+        ]
+        msg = f'''
+            🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
+
+        '''
+
+        for key in keys:
+            price = self.prices[key]
+            msg += f'\n📉 Tỷ giá {key[0]}: {key[1]} {key[2]} {key[3]} 💰 Giá: {price["Min Price"]}\n'
+
+        msg += f'''
+        
+            💰 VND-RUB: {round(vnd2rub_vnd/100)*100} / {round(vnd2rub_rub/10)}x 😍
+
+            💰 RUB-VND: {round(rub2vnd_rub/10)}x / {round(rub2vnd_vnd/100)*100} 😍
+        '''
+
+        spider.bot.send_message(chat_id=PUBLIC_ID, text=msg)
+
+    
+    def send_message_to_ctv_channel(self, spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub):
         msg = f'''
             🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
 
@@ -145,6 +174,4 @@ class AutoexchangeratePipeline:
 
             💰 RUB-VND: {round(rub2vnd_rub, 2)} / {round(rub2vnd_vnd/100)*100} 😍
         '''
-        spider.bot.send_message(chat_id=CHANNEL_ID, text=msg)
-
-    
+        spider.bot.send_message(chat_id=CTV_ID, text=msg)
