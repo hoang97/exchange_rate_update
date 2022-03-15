@@ -13,7 +13,7 @@ from datetime import datetime
 
 DEVELOPER_ID = '-716492562'
 PUBLIC_ID = '@chuyentienspb'
-CTV_ID = ''
+CTV_ID = '-1503353838'
 TIMEZONE = pytz.timezone('Europe/Moscow')
 
 class AutoexchangeratePipeline:
