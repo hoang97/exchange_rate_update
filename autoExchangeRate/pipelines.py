@@ -113,7 +113,7 @@ class AutoexchangeratePipeline:
         if spider.to_public == 'y':
             self.send_message_to_public_channel(spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub)
         if spider.to_ctv == 'y':
-            self.send_message_to_public_channel(spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub)
+            self.send_message_to_ctv_channel(spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub)
 
         logging.info('Scraped successfully!!!')
         # Disconnect from database

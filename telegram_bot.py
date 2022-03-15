@@ -29,11 +29,11 @@ def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('''
         Xin chào!
 /help - danh sách lệnh
-/set <seconds> <channel> - lên lịch đăng bài channel public hoặc ctv
-/unset <channel> - hủy lịch đăng bài channel public hoặc ctv
+/publish - <seconds> <channel> - lên lịch đăng bài channel public hoặc ctv
+/stop - <channel> - hủy lịch đăng bài channel public hoặc ctv
 /list - xem danh sách lịch đăng bài
 /current_rate - xem tỷ giá chi tiết
-/set_profit <vnd2rub_profit> <rub2vnd_profit> - thay đổi tỷ lệ lợi nhuận
+/set_profit - <vnd2rub_profit> <rub2vnd_profit> - thay đổi tỷ lệ lợi nhuận
     ''')
 
 
