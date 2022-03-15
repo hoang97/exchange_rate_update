@@ -11,9 +11,11 @@ import pandas as pd
 import pytz
 from datetime import datetime
 
-DEVELOPER_ID = '-716492562'
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+DEVELOPER_ID = '-1001786996731'
 PUBLIC_ID = '@chuyentienspb'
-CTV_ID = '-1503353838'
+CTV_ID = '-1001503353838'
 TIMEZONE = pytz.timezone('Europe/Moscow')
 
 class AutoexchangeratePipeline:
@@ -147,9 +149,8 @@ class AutoexchangeratePipeline:
             ('VietcomBank', 'BUY', 'USD', 'VND'),
             ('VietcomBank', 'SELL', 'USD', 'VND'),
         ]
-        msg = f'''
-            🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
-
+        msg = f'''  
+🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
         '''
 
         for key in keys:
@@ -157,21 +158,39 @@ class AutoexchangeratePipeline:
             msg += f'\n📉 Tỷ giá {key[0]}: {key[1]} {key[2]} {key[3]} 💰 Giá: {price["Min Price"]}\n'
 
         msg += f'''
-        
-            💰 VND-RUB: {round(vnd2rub_vnd/100)*100} / {round(vnd2rub_rub/10)}x 😍
+🔥  Tỷ giá Chuyển tiền Việt - Nga 🔥
+    
+    💰 VND-RUB: {round(vnd2rub_vnd/100)*100} / {int(vnd2rub_rub/10)}x 😍
 
-            💰 RUB-VND: {round(rub2vnd_rub/10)}x / {round(rub2vnd_vnd/100)*100} 😍
+    💰 RUB-VND: {int(rub2vnd_rub/10)}x / {round(rub2vnd_vnd/100)*100} 😍
+
+👇 Để có tỷ giá chính xác vui lòng liên hệ 👇
         '''
-
-        spider.bot.send_message(chat_id=PUBLIC_ID, text=msg)
+        keyboard = [
+            [
+                InlineKeyboardButton("Telegram", url='https://t.me/vuahn286'),
+                InlineKeyboardButton("Facebook", url='https://www.facebook.com/chuyentienSPB')
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        spider.bot.send_message(chat_id=PUBLIC_ID, text=msg, reply_markup=reply_markup)
 
     
     def send_message_to_ctv_channel(self, spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub):
         msg = f'''
-            🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
+🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
 
-            💰 VND-RUB: {round(vnd2rub_vnd/100)*100} / {round(vnd2rub_rub, 2)} 😍
+💰 VND-RUB: {round(vnd2rub_vnd/100)*100} / {round(vnd2rub_rub, 2)} 😍
 
-            💰 RUB-VND: {round(rub2vnd_rub, 2)} / {round(rub2vnd_vnd/100)*100} 😍
+💰 RUB-VND: {round(rub2vnd_rub, 2)} / {round(rub2vnd_vnd/100)*100} 😍
         '''
-        spider.bot.send_message(chat_id=CTV_ID, text=msg)
+        keyboard = [
+            [
+                InlineKeyboardButton("Telegram", url='https://t.me/vuahn286'),
+                InlineKeyboardButton("Facebook", url='https://www.facebook.com/chuyentienSPB')
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        spider.bot.send_message(chat_id=CTV_ID, text=msg, reply_markup=reply_markup)

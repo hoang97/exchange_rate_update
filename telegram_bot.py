@@ -15,7 +15,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 PRIVATE_ID = '1395019328'
-DEVELOPER_ID = '-716492562'
+DEVELOPER_ID = '-1001786996731'
 DEVELOPER_TIMEZONE = pytz.timezone('Europe/Moscow')
 
 # Define a few command handlers. These usually take the two arguments update and
@@ -63,7 +63,7 @@ def remove_job_if_exists(name: str, context: CallbackContext) -> bool:
 
 def set_timer(update: Update, context: CallbackContext) -> None:
     """Add a job to the queue."""
-    chat_id = update.message.chat_id
+    chat_id = update.message.chat.id
     try:
         # args[0] should contain the time for the timer in seconds
         interval = int(context.args[0])
@@ -72,14 +72,10 @@ def set_timer(update: Update, context: CallbackContext) -> None:
             update.message.reply_text('Xin lỗi mỗi lần lấy dữ liệu phải cách nhau ít nhất 2s!')
             return
 
-        if chat_id != DEVELOPER_ID:
-            update.message.reply_text('Xin lỗi chỉ admins mới được phép đăng bài!')
-            return
-
         if channel not in ['public', 'ctv']:
             raise ValueError
         
-        job_name = channel+ '_' +str(chat_id)
+        job_name = channel
         job_context = {
             'to_dev': 'n',
             'to_public': 'y' if channel == 'public' else 'n',
@@ -104,7 +100,9 @@ def unset(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     try:
         channel = context.args[0]
-        job_name = channel+"_"+str(chat_id)
+        if channel not in ['public', 'ctv']:
+            raise ValueError
+        job_name = channel
         job_removed = remove_job_if_exists(job_name, context)
         text = f'Đã hủy lịch đăng bài channel {channel} thành công!' if job_removed else f'Hiện không có lịch đăng bài channel {channel} nào.'
         update.message.reply_text(text)
@@ -189,7 +187,7 @@ Bắt đầu thực thi sau 2s ...
 
 
     interval = 3600
-    job_name = "public_"+str(DEVELOPER_ID)
+    job_name = "public"
     job_context = {
         'to_dev': 'n',
         'to_public': 'y',
@@ -198,7 +196,7 @@ Bắt đầu thực thi sau 2s ...
     dispatcher.job_queue.run_repeating(get_info, interval=interval, first=2, context=job_context, name=job_name)
 
     interval = 300
-    job_name = "ctv_"+str(DEVELOPER_ID)
+    job_name = "ctv"
     job_context = {
         'to_dev': 'n',
         'to_public': 'n',
