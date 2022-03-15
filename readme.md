@@ -8,6 +8,6 @@ pip install -r requirements.txt
 # Usage
 Start Bot
 ```
-python check_data.py
+python telegram_bot.py
 ```
 Attention: only 1 bot can run at the same time.
