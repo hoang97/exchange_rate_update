@@ -163,7 +163,7 @@ def set_profit(update: Update, context: CallbackContext )-> None:
 def auto_start_crawl(updater:Updater, dispatcher:Dispatcher):
     msg = '''
 Server đã khởi động lại
-Tự động lên lịch đăng bài channel sau mỗi 900s
+Tự động lên lịch đăng bài channel sau mỗi 300s
 Bắt đầu thực thi sau 2s ...
     '''
     updater.bot.send_message(chat_id=DEVELOPER_ID, text=msg)
@@ -196,7 +196,7 @@ def main() -> None:
     # Start the Bot
     updater.start_polling()
     
-    # auto_start_crawl(updater, dispatcher)
+    auto_start_crawl(updater, dispatcher)
     # Block until you press Ctrl-C or the process receives SIGINT, SIGTERM or
     # SIGABRT. This should be used most of the time, since start_polling() is
     # non-blocking and will stop the bot gracefully.
