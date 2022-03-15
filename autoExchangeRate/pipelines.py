@@ -141,9 +141,9 @@ class AutoexchangeratePipeline:
         msg = f'''
             🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
 
-                💰 VND-RUB: {round(vnd2rub_vnd/100)*100} / {round(vnd2rub_rub, 2)} 😍
+            💰 VND-RUB: {round(vnd2rub_vnd/100)*100} / {round(vnd2rub_rub, 2)} 😍
 
-                💰 RUB-VND: {round(rub2vnd_rub, 2)} / {round(rub2vnd_vnd/100)*100} 😍
+            💰 RUB-VND: {round(rub2vnd_rub, 2)} / {round(rub2vnd_vnd/100)*100} 😍
         '''
         spider.bot.send_message(chat_id=CHANNEL_ID, text=msg)
 
