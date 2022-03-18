@@ -69,6 +69,7 @@ class AutoexchangeratePipeline:
         logging.info('Connected to database!')
 
     def process_item(self, item, spider):
+        # print(item)
         self.data.append(item)
 
     def close_spider(self, spider):
@@ -79,11 +80,8 @@ class AutoexchangeratePipeline:
         for key in grouped_dataframe.groups:
             ind = grouped_dataframe.groups[key]
             data = dataframe.loc[ind]
-            month_order_count = data['monthOrderCount'].quantile(0.75)
-            data = data[(data['monthOrderCount'] >= month_order_count) & (data['monthFinishRate'] >= 0.95)]
-            if data.iloc[0]['fiat'] == "RUB":
-                mask = data['tradeMethods'].apply(lambda x: ('Tinkoff' in x) or ('BankTransferRussia' in x))
-                data = data[mask]
+            month_order_count = data['monthOrderCount'].quantile(0.5)
+            data = data[(data['monthOrderCount'] >= month_order_count) & (data['monthFinishRate'] >= 0.9)]
 
             self.prices[key] = {
                 "Min Price": data['price'].min(),
@@ -91,17 +89,27 @@ class AutoexchangeratePipeline:
                 "50% Price": data['price'].quantile(0.5),
                 "75% Price": data['price'].quantile(0.75),
                 "Max Price": data['price'].max(),
+                "Price": data['price'].nsmallest(30).max() if key[1] == 'BUY' else data['price'].nlargest(30).min()
             }
 
         # Định nghĩa
-        base_SELL_USD_RUB = self.prices[('VTBank24', 'SELL', 'USD', 'RUB')]['75% Price']
-        base_BUY_USD_RUB = self.prices[('VTBank24', 'BUY', 'USD', 'RUB')]['25% Price']
-        base_SELL_USD_VND = self.prices[('VietcomBank', 'BUY', 'USD', 'VND')]['75% Price']
-        base_BUY_USD_VND = self.prices[('VietcomBank', 'SELL', 'USD', 'VND')]['25% Price']
-        binance_SELL_USDT_RUB = self.prices[('binance', 'SELL', 'USDT', 'RUB')]['75% Price']
-        binance_BUY_USDT_RUB = self.prices[('binance', 'BUY', 'USDT', 'RUB')]['25% Price']
-        binance_SELL_USDT_VND = self.prices[('binance', 'SELL', 'USDT', 'VND')]['75% Price']
-        binance_BUY_USDT_VND = self.prices[('binance', 'BUY', 'USDT', 'VND')]['25% Price']
+        # base_SELL_USD_RUB = self.prices[('VTBank24', 'SELL', 'USD', 'RUB')]['75% Price']
+        # base_BUY_USD_RUB = self.prices[('VTBank24', 'BUY', 'USD', 'RUB')]['25% Price']
+        # base_SELL_USD_VND = self.prices[('VietcomBank', 'BUY', 'USD', 'VND')]['75% Price']
+        # base_BUY_USD_VND = self.prices[('VietcomBank', 'SELL', 'USD', 'VND')]['25% Price']
+        # binance_SELL_USDT_RUB = self.prices[('binance', 'SELL', 'USDT', 'RUB')]['75% Price']
+        # binance_BUY_USDT_RUB = self.prices[('binance', 'BUY', 'USDT', 'RUB')]['25% Price']
+        # binance_SELL_USDT_VND = self.prices[('binance', 'SELL', 'USDT', 'VND')]['75% Price']
+        # binance_BUY_USDT_VND = self.prices[('binance', 'BUY', 'USDT', 'VND')]['25% Price']
+
+        base_SELL_USD_RUB = self.prices[('VTBank24', 'SELL', 'USD', 'RUB')]['Price']
+        base_BUY_USD_RUB = self.prices[('VTBank24', 'BUY', 'USD', 'RUB')]['Price']
+        base_SELL_USD_VND = self.prices[('VietcomBank', 'BUY', 'USD', 'VND')]['Price']
+        base_BUY_USD_VND = self.prices[('VietcomBank', 'SELL', 'USD', 'VND')]['Price']
+        binance_SELL_USDT_RUB = self.prices[('binance', 'SELL', 'USDT', 'RUB')]['Price']
+        binance_BUY_USDT_RUB = self.prices[('binance', 'BUY', 'USDT', 'RUB')]['Price']
+        binance_SELL_USDT_VND = self.prices[('binance', 'SELL', 'USDT', 'VND')]['Price']
+        binance_BUY_USDT_VND = self.prices[('binance', 'BUY', 'USDT', 'VND')]['Price']
 
         # Giá giao dịch
         vnd2rub_vnd = base_BUY_USD_VND + 250
@@ -135,7 +143,8 @@ class AutoexchangeratePipeline:
                 msg += f'\n     💰 Giá 25%      : {price["25% Price"]}'
                 msg += f'\n     💰 Giá 50%      : {price["50% Price"]}'
                 msg += f'\n     💰 Giá 75%      : {price["75% Price"]}'
-                msg += f'\n     💰 Giá cao nhất : {price["Max Price"]}\n'
+                msg += f'\n     💰 Giá cao nhất : {price["Max Price"]}'
+                msg += f'\n     💰 Giá hợp lí   : {price["Price"]}\n'
         msg += f'\n📉 Tỷ giá báo khách: \n'
         msg += f'\n     💵 VND-RUB: {round(vnd2rub_vnd/100)*100} / {round(vnd2rub_rub, 2)} 😍 (lãi {self.vnd2rub_profit}%)\n'
         msg += f'\n     💵 RUB-VND: {round(rub2vnd_rub, 2)} / {round(rub2vnd_vnd/100)*100} 😍 (lãi {self.rub2vnd_profit}%)\n'
@@ -150,7 +159,7 @@ class AutoexchangeratePipeline:
             ('VietcomBank', 'SELL', 'USD', 'VND'),
         ]
         msg = f'''  
-🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
+🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %m %Y, %H:%M:%S")} Moscow 🔥
         '''
 
         for key in keys:
@@ -179,7 +188,7 @@ class AutoexchangeratePipeline:
     
     def send_message_to_ctv_channel(self, spider, vnd2rub_vnd, vnd2rub_rub, rub2vnd_vnd, rub2vnd_rub):
         msg = f'''
-🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %b %Y, %H:%M:%S")} 🔥
+🔥 Cập nhật tỷ giá {datetime.now(pytz.utc).astimezone(TIMEZONE).strftime("%d %m %Y, %H:%M:%S")} Moscow 🔥
 
 💰 VND-RUB: {round(vnd2rub_vnd/100)*100} / {round(vnd2rub_rub, 2)} 😍
 
