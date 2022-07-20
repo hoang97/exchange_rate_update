@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 class AutobinancerateSpider(scrapy.Spider):
     name = 'autoBinanceRate'
     allowed_domains = ['p2p.binance.com', 'portal.vietcombank.com.vn', 'm.kovalut.ru']
-    start_urls = ['https://m.kovalut.ru/prodat/dollar/sankt-peterburg/']
+    start_urls = ['https://m.kovalut.ru/prodat/dollar/sankt-peterburg']
     binance_api_url = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
     vcb_api_url = 'https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx'
 
@@ -43,9 +43,10 @@ class AutobinancerateSpider(scrapy.Spider):
 
         # Lấy tỷ giá cơ sở
         yield self.get_VCB_data()
-        price_sell = response.xpath('///*[@id="maket"]/section/section/table/tbody/tr[4]/td[4]/text()').get()
-        price_buy = response.xpath('////*[@id="maket"]/section/section/table/tbody/tr[4]/td[3]/text()').get()
-
+        price_sell = response.xpath('//table[contains(@class, "tb-k")]/tr[4]/td[4]/text()').get()
+        price_buy = response.xpath('//table[contains(@class, "tb-k")]/tr[4]/td[3]/text()').get()
+        print(price_buy)
+        print(price_sell)
         yield {
             "exchange": "VTBank24",
             "tradeType": "SELL",

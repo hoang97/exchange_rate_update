@@ -69,7 +69,6 @@ class AutoexchangeratePipeline:
         logging.info('Connected to database!')
 
     def process_item(self, item, spider):
-        # print(item)
         self.data.append(item)
 
     def close_spider(self, spider):
